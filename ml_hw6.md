@@ -3,29 +3,37 @@ ml_hw6
 Mohammad
 2023-02-27
 
-Comparison between Classification Trees, SVM and Logistic Regression
+# Goal
 
-The posted article by Yu et al utilized NHANES data from 1999-2004 to
-predict diabetes and pre-diabetes using Support Vector Machines. You
-will conduct a similar analysis using data within the NHANES package in
-R. For this exercise, you will try to predict Diabetes using similar
-(although not all) variables. The available data is also slightly
-different, so you likely won’t get the same answers.
+To use the NHANES data to predict Diabetes using similar 11 variables.
+Those are restricted to the following:
 
-REMINDER: Look at the frequency of your outcome variable to check for
-balance
+- `Age`
+- `Race1`
+- `Education`
+- `HHIncome`
+- `Weight`
+- `Height`
+- `Pulse`
+- `Diabetes`
+- `BMI`
+- `PhysActive`
+- `Smoke100`
 
-For this assignment, you will:
-
-1.  Restrict the NHANES data to the list of 11 variables below.
-    Partition the data into training and testing using a 70/30 split.
-
-“Age”, “Race1”, “Education”, “HHIncome”, “Weight”, “Height”, “Pulse”,
-“Diabetes”, “BMI”, “PhysActive”, “Smoke100”
+## Preprocessing
 
 ``` r
+set.seed(123)
+
 data(NHANES)
 
+#Check missingness in the data
+Amelia::missmap(NHANES)
+```
+
+<img src="ml_hw6_files/figure-gfm/preprocessing-1.png" width="90%" />
+
+``` r
 nhanes <-
     NHANES %>% 
     as_tibble(NHANES) %>% 
@@ -33,13 +41,8 @@ nhanes <-
     janitor::clean_names() %>% 
     drop_na()
 
- Amelia::missmap(nhanes)
-```
-
-<img src="ml_hw6_files/figure-gfm/tidying-1.png" width="90%" />
-
-``` r
- str(nhanes)
+#Check data structure and balance of the outcome
+str(nhanes)
 ```
 
     ## tibble [6,356 × 11] (S3: tbl_df/tbl/data.frame)
@@ -56,27 +59,30 @@ nhanes <-
     ##  $ smoke100   : Factor w/ 2 levels "No","Yes": 2 2 2 2 1 1 1 2 1 1 ...
 
 ``` r
- summary(nhanes[, "diabetes"])
+summary(nhanes[, "diabetes"])
 ```
 
     ##  diabetes  
     ##  No :5697  
     ##  Yes: 659
 
-2.  Construct three prediction models to predict diabetes using the 11
-    features from NHANES. You will use the following three algorithms to
-    create your prediction models:
-
-<!-- -->
-
-1)  Classification Tree
-
 ``` r
+#Partition the data
 train.index <- createDataPartition(nhanes$diabetes, p = 0.7, list = FALSE)
 
 training <- nhanes[train.index, ]
 testing <- nhanes[-train.index, ]
 ```
+
+## Prediction models
+
+To predict diabetes using the 11 features from NHANES, we will use the
+following three algorithms to create the models:
+
+### Classification Tree
+
+Best tune for cp = 0.001. Accuracy = 0.7045. age , bmi, and weight are
+the highest ranked importance variables
 
 ``` r
 set.seed(123)
@@ -86,6 +92,7 @@ diabetestree <-
           trControl= trainControl(method = "cv", number = 10, sampling = "down"), 
            preProc = c("center", "scale"), tuneGrid = expand.grid(cp = seq(0.001, 0.3, by = 0.01)))
 
+#Get best tune and results 
 diabetestree$bestTune
 ```
 
@@ -97,36 +104,36 @@ diabetestree$results
 ```
 
     ##       cp  Accuracy     Kappa AccuracySD    KappaSD
-    ## 1  0.001 0.7152965 0.2356508 0.02485464 0.03263886
-    ## 2  0.011 0.6939582 0.2336554 0.05839749 0.05240021
-    ## 3  0.021 0.6584404 0.1978485 0.03614982 0.04259807
-    ## 4  0.031 0.6440852 0.1823117 0.04783196 0.03833600
-    ## 5  0.041 0.5952851 0.1609570 0.02951454 0.02077118
-    ## 6  0.051 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 7  0.061 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 8  0.071 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 9  0.081 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 10 0.091 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 11 0.101 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 12 0.111 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 13 0.121 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 14 0.131 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 15 0.141 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 16 0.151 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 17 0.161 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 18 0.171 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 19 0.181 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 20 0.191 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 21 0.201 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 22 0.211 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 23 0.221 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 24 0.231 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 25 0.241 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 26 0.251 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 27 0.261 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 28 0.271 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 29 0.281 0.6011278 0.1624436 0.03993299 0.02278388
-    ## 30 0.291 0.6011278 0.1624436 0.03993299 0.02278388
+    ## 1  0.001 0.7044851 0.2225926 0.02841200 0.03349895
+    ## 2  0.011 0.6692093 0.2027177 0.04085624 0.03930518
+    ## 3  0.021 0.6426893 0.1774506 0.04719608 0.04582471
+    ## 4  0.031 0.6269443 0.1755479 0.05187012 0.04626204
+    ## 5  0.041 0.6090081 0.1640054 0.04768762 0.04897937
+    ## 6  0.051 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 7  0.061 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 8  0.071 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 9  0.081 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 10 0.091 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 11 0.101 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 12 0.111 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 13 0.121 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 14 0.131 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 15 0.141 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 16 0.151 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 17 0.161 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 18 0.171 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 19 0.181 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 20 0.191 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 21 0.201 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 22 0.211 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 23 0.221 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 24 0.231 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 25 0.241 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 26 0.251 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 27 0.261 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 28 0.271 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 29 0.281 0.5793452 0.1431098 0.03648829 0.02745343
+    ## 30 0.291 0.5793452 0.1431098 0.03648829 0.02745343
 
 ``` r
 #Plot the tree
@@ -142,29 +149,29 @@ varImp(diabetestree)
 
     ## rpart variable importance
     ## 
-    ##   only 20 most important variables shown (out of 34)
+    ##   only 20 most important variables shown (out of 35)
     ## 
-    ##                           Overall
-    ## age                       100.000
-    ## bmi                        74.030
-    ## weight                     64.513
-    ## height                     36.249
-    ## pulse                      29.432
-    ## race1White                 28.836
-    ## phys_activeYes             18.751
-    ## hh_incomemore 99999        14.462
-    ## smoke100Yes                11.380
-    ## hh_income65000-74999        8.948
-    ## hh_income15000-19999        5.169
-    ## educationHigh School        5.103
-    ## educationSome College       2.614
-    ## hh_income75000-99999        2.236
-    ## race1Mexican                2.191
-    ## hh_income35000-44999        1.544
-    ## educationCollege Grad       1.175
-    ## `hh_income45000-54999`      0.000
-    ## `hh_income75000-99999`      0.000
-    ## `education9 - 11th Grade`   0.000
+    ##                         Overall
+    ## age                    100.0000
+    ## bmi                     69.7194
+    ## weight                  49.7904
+    ## height                  29.0285
+    ## pulse                   28.3578
+    ## educationCollege Grad   22.7297
+    ## phys_activeYes          11.6649
+    ## hh_incomemore 99999     11.2164
+    ## race1White               4.5234
+    ## smoke100Yes              4.4698
+    ## hh_income45000-54999     4.0866
+    ## race1Mexican             3.7162
+    ## race1Hispanic            1.9055
+    ## educationSome College    1.8275
+    ## hh_income55000-64999     1.1010
+    ## hh_income65000-74999     1.0431
+    ## educationHigh School     0.8472
+    ## hh_income75000-99999     0.7452
+    ## hh_income20000-24999     0.5552
+    ## `hh_income55000-64999`   0.0000
 
 ``` r
 #Obtain accuracy and other metrics
@@ -177,66 +184,68 @@ confusionMatrix(diabetestree)
     ##  
     ##           Reference
     ## Prediction   No  Yes
-    ##        No  63.6  2.5
-    ##        Yes 26.0  7.9
+    ##        No  62.6  2.6
+    ##        Yes 27.0  7.8
     ##                             
-    ##  Accuracy (average) : 0.7153
+    ##  Accuracy (average) : 0.7045
 
-2)  Support Vector Classifier (i.e. Support Vector Machine with a linear
-    classifier)
+### Support Vector Classifier
+
+Support Vector Machine with a linear classifier
+
+The best tune for C = 1.9, accuracy = 0.7126
 
 ``` r
 set.seed(123)
 
 #Trainmodel using different values for cost (C)
-set.seed(123)
-
 svm <- 
     train(diabetes ~ ., data  = training, method = "svmLinear",
-          trControl = trainControl(method = "cv", number = 10, sampling = "down", classProbs = T), 
+          trControl = trainControl(method = "cv", number = 10, sampling = "down"), 
           preProcess = c("center", "scale"), tuneGrid = expand.grid(C = seq(0.001, 2, length = 30)))
 
+#Get results
 svm$bestTune
 ```
 
     ##           C
-    ## 18 1.172828
+    ## 29 1.931069
 
 ``` r
 svm$results
 ```
 
     ##             C  Accuracy     Kappa AccuracySD    KappaSD
-    ## 1  0.00100000 0.6725932 0.1994310 0.01930525 0.01694138
-    ## 2  0.06993103 0.7107965 0.2335305 0.02148872 0.03076259
-    ## 3  0.13886207 0.7114722 0.2362990 0.02371942 0.03032815
-    ## 4  0.20779310 0.7159560 0.2416135 0.02203886 0.03086260
-    ## 5  0.27672414 0.7130448 0.2381057 0.03037394 0.04376779
-    ## 6  0.34565517 0.7202257 0.2519657 0.02308737 0.03064341
-    ## 7  0.41458621 0.7204580 0.2483398 0.02855784 0.03674153
-    ## 8  0.48351724 0.7224744 0.2477286 0.02225911 0.03504347
-    ## 9  0.55244828 0.7233783 0.2508046 0.02048273 0.03062435
-    ## 10 0.62137931 0.7148400 0.2483814 0.02430934 0.03276658
-    ## 11 0.69031034 0.7161792 0.2424804 0.02829967 0.03976054
-    ## 12 0.75924138 0.7175265 0.2450713 0.02145175 0.03100681
-    ## 13 0.82817241 0.7150692 0.2431362 0.01787869 0.02398132
-    ## 14 0.89710345 0.7222507 0.2512728 0.02867565 0.04529453
-    ## 15 0.96603448 0.7166438 0.2434897 0.02671270 0.03774612
-    ## 16 1.03496552 0.7191127 0.2504438 0.02657937 0.03706518
-    ## 17 1.10389655 0.7186582 0.2527797 0.02255972 0.03630660
-    ## 18 1.17282759 0.7242686 0.2547874 0.03326152 0.04736298
-    ## 19 1.24175862 0.7206696 0.2483459 0.01986476 0.02431055
-    ## 20 1.31068966 0.7148380 0.2406154 0.02454958 0.03577312
-    ## 21 1.37962069 0.7209049 0.2505576 0.02414252 0.03438223
-    ## 22 1.44855172 0.7123615 0.2442457 0.02542991 0.03409961
-    ## 23 1.51748276 0.7085433 0.2341166 0.02076017 0.02915209
-    ## 24 1.58641379 0.7211326 0.2497896 0.01778966 0.02654145
-    ## 25 1.65534483 0.7143921 0.2392831 0.02383343 0.03955923
-    ## 26 1.72427586 0.7146173 0.2496823 0.01756965 0.02844888
-    ## 27 1.79320690 0.7177568 0.2519365 0.02356779 0.04238970
-    ## 28 1.86213793 0.7224714 0.2578624 0.02099446 0.03669973
-    ## 29 1.93106897 0.7170837 0.2457517 0.02250552 0.02690719
-    ## 30 2.00000000 0.7125862 0.2398617 0.01866391 0.03224249
+    ## 1  0.00100000 0.6887583 0.2070623 0.02558989 0.02698443
+    ## 2  0.06993103 0.7008957 0.2355595 0.03337312 0.04468051
+    ## 3  0.13886207 0.6954994 0.2266883 0.03123086 0.04431058
+    ## 4  0.20779310 0.7044837 0.2376260 0.02652449 0.03992456
+    ## 5  0.27672414 0.6990970 0.2283955 0.02458018 0.03718135
+    ## 6  0.34565517 0.7105506 0.2418594 0.03477403 0.04902698
+    ## 7  0.41458621 0.6939259 0.2225483 0.02544033 0.03236684
+    ## 8  0.48351724 0.7044968 0.2377812 0.03233465 0.05017294
+    ## 9  0.55244828 0.7076368 0.2373929 0.02664660 0.03807518
+    ## 10 0.62137931 0.7092104 0.2408223 0.02536140 0.03986034
+    ## 11 0.69031034 0.7096558 0.2457647 0.02616778 0.04077049
+    ## 12 0.75924138 0.6988667 0.2253068 0.02967305 0.04591711
+    ## 13 0.82817241 0.7038090 0.2357510 0.03312764 0.04433242
+    ## 14 0.89710345 0.7078635 0.2368134 0.02669722 0.04559831
+    ## 15 0.96603448 0.7083120 0.2371555 0.03047789 0.04163927
+    ## 16 1.03496552 0.7080807 0.2437129 0.02309712 0.03750777
+    ## 17 1.10389655 0.7103238 0.2382504 0.02969149 0.05097114
+    ## 18 1.17282759 0.7083105 0.2398567 0.02187385 0.03569114
+    ## 19 1.24175862 0.7069551 0.2338967 0.02616952 0.04393282
+    ## 20 1.31068966 0.6979703 0.2305565 0.02847907 0.04096510
+    ## 21 1.37962069 0.7053851 0.2371905 0.03253801 0.04564507
+    ## 22 1.44855172 0.7049311 0.2386977 0.03117527 0.04663823
+    ## 23 1.51748276 0.7020138 0.2337670 0.03239458 0.04487877
+    ## 24 1.58641379 0.6970674 0.2341420 0.02459489 0.03814218
+    ## 25 1.65534483 0.7065112 0.2318920 0.03037704 0.04460001
+    ## 26 1.72427586 0.7067349 0.2415578 0.03300357 0.04457183
+    ## 27 1.79320690 0.7047144 0.2331321 0.02882514 0.03916682
+    ## 28 1.86213793 0.7092194 0.2407636 0.02858939 0.04047193
+    ## 29 1.93106897 0.7125650 0.2467470 0.03252101 0.05436676
+    ## 30 2.00000000 0.7101122 0.2434769 0.03240846 0.04978576
 
 ``` r
 #Visualize accuracy versus values of C
@@ -256,10 +265,10 @@ confusionMatrix(svm)
     ##  
     ##           Reference
     ## Prediction   No  Yes
-    ##        No  64.3  2.2
-    ##        Yes 25.3  8.1
+    ##        No  63.0  2.1
+    ##        Yes 26.7  8.3
     ##                             
-    ##  Accuracy (average) : 0.7243
+    ##  Accuracy (average) : 0.7126
 
 ``` r
 #See information about final model
@@ -269,17 +278,18 @@ svm$finalModel
     ## Support Vector Machine object of class "ksvm" 
     ## 
     ## SV type: C-svc  (classification) 
-    ##  parameter : cost C = 1.1728275862069 
+    ##  parameter : cost C = 1.93106896551724 
     ## 
     ## Linear (vanilla) kernel function. 
     ## 
-    ## Number of Support Vectors : 559 
+    ## Number of Support Vectors : 544 
     ## 
-    ## Objective Function Value : -632.0229 
-    ## Training error : 0.238095 
-    ## Probability model included.
+    ## Objective Function Value : -1011.328 
+    ## Training error : 0.252165
 
-3)  Logistic regression.
+### Logistic regression.
+
+Accuracy = 0.7148
 
 ``` r
 set.seed(123) 
@@ -299,21 +309,26 @@ confusionMatrix(glm)
     ##  
     ##           Reference
     ## Prediction   No  Yes
-    ##        No  64.3  2.2
-    ##        Yes 25.3  8.2
+    ##        No  63.6  2.5
+    ##        Yes 26.0  7.9
     ##                             
-    ##  Accuracy (average) : 0.7245
+    ##  Accuracy (average) : 0.7148
 
-3.  You will optimize each model using cross-validation to choose
-    hyperparameters in the training data and then compare performance
-    across models.
+## Model selection and evaluation
 
-4.  Select a “optimal” model and calculate final evaluation metrics in
-    the test set.
+The Support Vector Classifier SVC (accuracy = 0.7126) and traditional
+logistic regression (accuracy = 0.7148) models performed similarly.
+However, SVC offer a clear margin of separation in the data making it
+better in classification of observations and more stable which makes it
+the “optimal” model to predict diabetes in testing data. . Evaluating
+the SVC model on the testing data yieldss high accuracy = 0.7051,
+sensitivity = 0.8223, and a little lower specificity = 0.6916
 
 ``` r
-#Make predictions in testset
-preds <-predict(svm, testing)
+set.seed(123)
+
+#Make predictions in test set
+preds <- predict(svm, testing)
 
 #Get evaluation metrics from test set
 confusionMatrix(preds, testing$diabetes, positive = "Yes")
@@ -323,57 +338,36 @@ confusionMatrix(preds, testing$diabetes, positive = "Yes")
     ## 
     ##           Reference
     ## Prediction   No  Yes
-    ##        No  1228   44
-    ##        Yes  481  153
+    ##        No  1182   35
+    ##        Yes  527  162
     ##                                           
-    ##                Accuracy : 0.7246          
-    ##                  95% CI : (0.7039, 0.7445)
+    ##                Accuracy : 0.7051          
+    ##                  95% CI : (0.6841, 0.7255)
     ##     No Information Rate : 0.8966          
     ##     P-Value [Acc > NIR] : 1               
     ##                                           
-    ##                   Kappa : 0.2499          
+    ##                   Kappa : 0.2442          
     ##                                           
     ##  Mcnemar's Test P-Value : <2e-16          
     ##                                           
-    ##             Sensitivity : 0.77665         
-    ##             Specificity : 0.71855         
-    ##          Pos Pred Value : 0.24132         
-    ##          Neg Pred Value : 0.96541         
+    ##             Sensitivity : 0.82234         
+    ##             Specificity : 0.69163         
+    ##          Pos Pred Value : 0.23512         
+    ##          Neg Pred Value : 0.97124         
     ##              Prevalence : 0.10336         
-    ##          Detection Rate : 0.08027         
-    ##    Detection Prevalence : 0.33263         
-    ##       Balanced Accuracy : 0.74760         
+    ##          Detection Rate : 0.08499         
+    ##    Detection Prevalence : 0.36149         
+    ##       Balanced Accuracy : 0.75698         
     ##                                           
     ##        'Positive' Class : Yes             
     ## 
 
-``` r
-#Create ROC Curve for Analysis
-probs <- predict(svm, testing, type = "prob")
+## Limitations and considerations
 
-#Another potential evaluation: Area under the Reciver Operating Curve (AUROC)
-analysis <- roc(response = testing$diabetes, predictor = probs[,2])
-```
-
-    ## Setting levels: control = No, case = Yes
-
-    ## Setting direction: controls < cases
-
-``` r
-plot(1-analysis$specificities,analysis$sensitivities,type="l",
-ylab="Sensitivity",xlab="1-Specificity",col="black",lwd=2,
-main = "ROC Curve for Heart Disease Classification")
-abline(a = 0, b = 1)
-```
-
-<img src="ml_hw6_files/figure-gfm/predictions-1.png" width="90%" />
-
-5.  List and describe at least two limitations/considerations of the
-    model generated by this analysis. Limitations can be analytical or
-    they can be considerations that need to be made regarding how the
-    model would be applied in practice.
-
-The data had a lot of missing data which were excluded prior to training
-the model. This observations are inportant and includig them accounts
-for a better represnetation of the populations of interest.
-Additionally,
+Excluding the missing observations from the data reduces model
+generalizability and real life data representation. Additionally, using
+SVC models limits the interpretability. These are two analytical
+limitations. Moreover, when conducting predictions using this model in
+practice, close attention must be paid to social and cultural context
+that may have an impact both on making and using diabetes predictions in
+different communities.

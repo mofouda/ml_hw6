@@ -1,8 +1,6 @@
 ---
 title: "ml_hw6"
-author: "Mohammad"
-date: "2023-02-27"
-output: github_document
+output: word_document
 ---
 
 ```{r setup, include=FALSE}
@@ -163,4 +161,5 @@ confusionMatrix(preds, testing$diabetes, positive = "Yes")
 
 ## Limitations and considerations
 
-Excluding the missing observations from the data reduces model generalizability and real life data representation. Additionally, using SVC models limits the interpretability. These are two analytical limitations. Moreover, when conducting predictions using this model in practice, close attention must be paid to social and cultural context that may have an impact both on making and using diabetes  predictions in different communities. 
+Excluding the missing observations from the data reduces model generalizability and real life data representation. Additionally, using SVC models limits the interpretability. These are two analytical limitations. Moreover, when conducting predictions using this model in practice, close attention must be paid to social and cultural context that may have an impact both on making and using diabetes  predictions in different communities.
+
