@@ -68,10 +68,15 @@ summary(nhanes[, "diabetes"])
 
 ``` r
 #Partition the data
-train.index <- createDataPartition(nhanes$diabetes, p = 0.7, list = FALSE)
+train.index <- 
+    nhanes$diabetes %>% 
+    createDataPartition(p = 0.7, list = FALSE)
 
-training <- nhanes[train.index, ]
-testing <- nhanes[-train.index, ]
+training <- 
+    nhanes[train.index, ]
+
+testing <- 
+    nhanes[-train.index, ]
 ```
 
 ## Prediction models
